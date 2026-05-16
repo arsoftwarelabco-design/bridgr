@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridgr - Paste a GitHub repo. Get a business report. Instantly.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="bridgr_logo_icon_only.png" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f1729;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% {
+                background: linear-gradient(135deg, #0f1729 0%, #0d2154 50%, #0f1729 100%);
+            }
+            50% {
+                background: linear-gradient(135deg, #0d2154 0%, #0f1729 50%, #0d2154 100%);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes barGrow {
+            from {
+                width: 0;
+            }
+        }
+
+        .hero {
+            position: relative;
+            min-height: 280px;
+            padding: 40px 20px 60px;
+            background: linear-gradient(135deg, #0f1729 0%, #0d2154 50%, #0f1729 100%);
+            animation: gradientShift 8s ease-in-out infinite;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 24px 24px;
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            z-index: 1;
+        }
+
+        .hero-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo {
+            height: 70px;
+        }
+
+        .ibm-badge {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .tagline {
+            font-size: 32px;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.3;
+            max-width: 700px;
+        }
+
+        .hero-separator {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #0f62fe, transparent);
+            opacity: 0.3;
+        }
+
+        .metrics-bar {
+            background: #0a0f1a;
+            padding: 24px 20px;
+            border-bottom: 1px solid #1a2744;
+        }
+
+        .metrics-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-number {
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f62fe;
+            margin-bottom: 4px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #8b9bb4;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-divider {
+            width: 1px;
+            height: 40px;
+            background: #2a3a5c;
+        }
+
+        .analyzer-section {
+            padding: 60px 20px;
+            background: #0f1729;
+        }
+
+        .input-panel {
+            max-width: 680px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .input-panel.hidden {
+            display: none;
+        }
+
+        .input-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #8b9bb4;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .repo-input {
+            width: 100%;
+            background: #1a2744;
+            border: 1px solid #2a3a5c;
+            border-radius: 10px;
+            padding: 16px 20px;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 200ms ease;
+            margin-bottom: 16px;
+        }
+
+        .repo-input:focus {
+            border-color: #0f62fe;
+        }
+
+        .repo-input::placeholder {
+            color: #4a5a7c;
+        }
+
+        .example-chips {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            background: rgba(15, 98, 254, 0.15);
+            color: #0f62fe;
+            border: 1px solid #0f62fe;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 200ms ease;
+        }
+
+        .chip:hover {
+            background: rgba(15, 98, 254, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .analyze-button {
+            width: 100%;
+            background: #0f62fe;
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 200ms ease;
+        }
+
+        .analyze-button:hover {
+            filter: brightness(1.15);
+        }
+
+        .analyze-button:active {
+            transform: scale(0.98);
+        }
+
+        .disclaimer {
+            font-size: 12px;
+            color: #8b9bb4;
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .loading-panel {
+            max-width: 680px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 60px 20px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .loading-panel.active {
+            display: block;
+        }
+
+        .loading-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 24px;
+            animation: bounce 1.5s ease-in-out infinite;
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: #8b9bb4;
+            margin-bottom: 8px;
+        }
+
+        .loading-subtext {
+            font-size: 12px;
+            color: #4a5a7c;
+        }
+
+        .report-panel {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .report-panel.active {
+            display: block;
+        }
+
+        .report-header {
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .repo-name {
+            font-size: 28px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .tag-pills {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tag-pill {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .analyzed-time {
+            font-size: 12px;
+            color: #8b9bb4;
+        }
+
+        .competitive-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg,
+                rgba(15,98,254,0.15), rgba(124,58,237,0.15));
+            border: 1px solid rgba(15,98,254,0.3);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin: 16px 0;
+            font-size: 14px;
+            color: #ffffff;
+            font-style: italic;
+        }
+
+        .competitive-banner .lucide {
+            stroke: #0f62fe;
+            min-width: 18px;
+        }
+
+        .confidence-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .report-card {
+            background: #1a2744;
+            border: 1px solid #2a3a5c;
+            border-left: 3px solid #0f62fe;
+            border-radius: 12px;
+            padding: 28px;
+            animation: slideIn 0.5s ease;
+        }
+
+        .report-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .card-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: rgba(15, 98, 254, 0.12);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .card-icon .lucide {
+            width: 18px;
+            height: 18px;
+            stroke: #0f62fe;
+            stroke-width: 2;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 16px;
+        }
+
+        .card-content {
+            font-size: 14px;
+            color: #8b9bb4;
+            line-height: 1.8;
+        }
+
+        .bullet-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .bullet-list li {
+            position: relative;
+            padding-left: 28px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .bullet-list li .lucide {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #0f62fe;
+            margin-top: 4px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .timeline-item:not(:last-child) .timeline-dot:after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            left: 5px;
+            width: 2px;
+            height: 40px;
+            background: #2a3a5c;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-phase {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .timeline-duration {
+            font-size: 12px;
+            color: #8b9bb4;
+        }
+
+        .chart-bar {
+            margin-bottom: 16px;
+        }
+
+        .chart-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .chart-label-text {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .chart-label-percent {
+            color: #8b9bb4;
+        }
+
+        .chart-bar-bg {
+            height: 10px;
+            background: #0f1729;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            animation: barGrow 1s ease;
+        }
+
+        .chart-bar-fill.blue {
+            background: #0f62fe;
+        }
+
+        .chart-bar-fill.purple {
+            background: #7c3aed;
+        }
+
+        .chart-bar-fill.cyan {
+            background: #0891b2;
+        }
+
+        .chart-bar-fill.green {
+            background: #059669;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .action-button {
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 200ms ease;
+        }
+
+        .action-button.outline {
+            background: transparent;
+            border: 2px solid #0f62fe;
+            color: #0f62fe;
+        }
+
+        .action-button.outline:hover {
+            background: rgba(15, 98, 254, 0.1);
+        }
+
+        .action-button.solid {
+            background: #0f62fe;
+            border: 2px solid #0f62fe;
+            color: #ffffff;
+        }
+
+        .action-button.solid:hover {
+            filter: brightness(1.15);
+        }
+
+        .chat-section {
+            padding: 60px 20px 80px;
+            background: #0a0f1a;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 800;
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle {
+            font-size: 16px;
+            color: #8b9bb4;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #111d35;
+            border: 1px solid #2a3a5c;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #1a2744;
+            padding: 16px 20px;
+            border-bottom: 1px solid #2a3a5c;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .chat-header-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .chat-status {
+            font-size: 12px;
+            color: #22c55e;
+            margin-left: auto;
+        }
+
+        .chat-messages {
+            min-height: 260px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #0f1729;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #2a3a5c;
+            border-radius: 3px;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 16px;
+            animation: fadeIn 300ms ease;
+            gap: 12px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.user .message-bubble {
+            background: #0f62fe;
+            color: #ffffff;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #1a2744;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .message.user .avatar {
+            order: 2;
+            background: #2a3a5c;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: #1a2744;
+            color: #ffffff;
+        }
+
+        .message-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 16px;
+            background: #1a2744;
+            border-radius: 12px;
+            max-width: fit-content;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #8b9bb4;
+            animation: typingBounce 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-6px);
+            }
+        }
+
+        .chat-input-area {
+            padding: 16px 20px;
+            background: #1a2744;
+            backdrop-filter: blur(10px);
+            border-top: 1px solid #2a3a5c;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 12px;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: #0f1729;
+            border: 1px solid #2a3a5c;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 200ms ease;
+        }
+
+        .chat-input:focus {
+            border-color: #0f62fe;
+        }
+
+        .chat-input::placeholder {
+            color: #8b9bb4;
+        }
+
+        .send-button {
+            background: #0f62fe;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-family: 'Inter', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 200ms ease;
+        }
+
+        .send-button:hover {
+            filter: brightness(1.15);
+        }
+
+        .send-button:active {
+            transform: scale(0.98);
+        }
+
+        .error-card {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            border-left: 3px solid #ef4444;
+            border-radius: 12px;
+            padding: 28px;
+            max-width: 680px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .error-card .card-title {
+            color: #ef4444;
+        }
+
+        footer {
+            background: #0a0f1a;
+            padding: 32px 20px;
+            text-align: center;
+            border-top: 1px solid #1a2744;
+        }
+
+        footer p {
+            font-size: 13px;
+            color: #8b9bb4;
+        }
+
+        .lucide {
+            width: 20px;
+            height: 20px;
+            stroke: #0f62fe;
+            stroke-width: 1.8;
+            fill: none;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .tagline {
+                font-size: 24px;
+            }
+
+            .metrics-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .metric-divider {
+                display: none;
+            }
+
+            .report-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .confidence-badge {
+                position: static;
+                display: inline-block;
+                margin-top: 12px;
+            }
+
+            .report-actions {
+                flex-direction: column;
+            }
+
+            .action-button {
+                width: 100%;
+            }
+
+            .message-bubble {
+                max-width: 85%;
+            }
+
+            .example-chips {
+                flex-direction: column;
+            }
+
+            .chip {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="hero">
+        <div class="hero-content">
+            <div class="hero-header">
+                <img src="bridgr_logo_dark_horizontal.png" alt="Bridgr" class="logo">
+                <div class="ibm-badge">Powered by IBM watsonx</div>
+            </div>
+            <p class="tagline">Paste a GitHub repo. Get a business report. Instantly.</p>
+        </div>
+    </header>
+    <div class="hero-separator"></div>
+
+    <section class="metrics-bar">
+        <div class="metrics-container">
+            <div class="metric">
+                <div class="metric-number">Any Repo</div>
+                <div class="metric-label">Public GitHub</div>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric">
+                <div class="metric-number">Zero Jargon</div>
+                <div class="metric-label">Plain English</div>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric">
+                <div class="metric-number">IBM</div>
+                <div class="metric-label">Powered</div>
+            </div>
+        </div>
+    </section>
+
+    <main>
+        <section class="analyzer-section">
+            <!-- STEP 1: INPUT STATE -->
+            <div class="input-panel" id="inputPanel">
+                <label class="input-label">Enter a GitHub Repository URL</label>
+                <input 
+                    type="text" 
+                    class="repo-input" 
+                    id="repoInput" 
+                    placeholder="https://github.com/user/repo"
+                    autocomplete="off"
+                >
+                <div class="example-chips">
+                    <button class="chip" data-url="https://github.com/bradtraversy/50projects50days">Swipe UI</button>
+                    <button class="chip" data-url="https://github.com/xenova/transformers.js">Local AI</button>
+                    <button class="chip" data-url="https://github.com/handsontable/handsontable">JS Spreadsheet</button>
+                </div>
+                <button class="analyze-button" id="analyzeButton">Analyze Repository →</button>
+                <p class="disclaimer">Bridgr reads public repositories only. Analysis powered by IBM watsonx.</p>
+            </div>
+
+            <!-- STEP 2: LOADING STATE -->
+            <div class="loading-panel" id="loadingPanel">
+                <img src="bridgr_logo_icon_only.png" alt="Loading" class="loading-icon">
+                <div class="loading-text">Analyzing repository...</div>
+                <div class="loading-subtext">IBM watsonx is reading the code and generating insights</div>
+            </div>
+
+            <!-- STEP 3: REPORT STATE -->
+            <div class="report-panel" id="reportPanel">
+                <div class="report-header">
+                    <h2 class="repo-name" id="report-title"></h2>
+                    <div class="tag-pills" id="tagPills"></div>
+                    <div class="competitive-banner">
+                        <i data-lucide="zap"></i>
+                        <span id="competitive-edge-text"></span>
+                    </div>
+                    <div class="analyzed-time" id="analyzedTime"></div>
+                    <div class="confidence-badge" id="confidenceBadge"></div>
+                </div>
+
+                <div class="report-grid">
+                    <div class="report-card full-width">
+                        <div class="card-icon">
+                            <i data-lucide="target"></i>
+                        </div>
+                        <h3 class="card-title">What It Does</h3>
+                        <div class="card-content" id="whatItDoes"></div>
+                    </div>
+
+                    <div class="report-card full-width" id="radar-card">
+                        <div class="card-icon"><i data-lucide="activity"></i></div>
+                        <h3 class="card-title">Project Fit Assessment</h3>
+                        <p class="card-content" style="margin-bottom:24px">
+                            How this project scores across key business dimensions
+                        </p>
+                        <div style="max-width:380px; margin:0 auto">
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="report-card">
+                        <div class="card-icon">
+                            <i data-lucide="briefcase"></i>
+                        </div>
+                        <h3 class="card-title">Business Value</h3>
+                        <ul class="bullet-list" id="businessValue"></ul>
+                    </div>
+
+                    <div class="report-card">
+                        <div class="card-icon">
+                            <i data-lucide="building-2"></i>
+                        </div>
+                        <h3 class="card-title">Best For</h3>
+                        <ul class="bullet-list" id="industries"></ul>
+                    </div>
+
+                    <div class="report-card">
+                        <div class="card-icon">
+                            <i data-lucide="alert-triangle"></i>
+                        </div>
+                        <h3 class="card-title">Risks & Considerations</h3>
+                        <ul class="bullet-list" id="risks"></ul>
+                    </div>
+
+                    <div class="report-card">
+                        <div class="card-icon">
+                            <i data-lucide="calendar"></i>
+                        </div>
+                        <h3 class="card-title">Implementation Timeline</h3>
+                        <div class="timeline" id="timeline"></div>
+                    </div>
+
+                    <div class="report-card">
+                        <div class="card-icon">
+                            <i data-lucide="bar-chart-2"></i>
+                        </div>
+                        <h3 class="card-title">Investment Breakdown</h3>
+                        <div id="investmentChart"></div>
+                    </div>
+                </div>
+
+                <div class="report-actions">
+                    <button class="action-button outline" onclick="resetAnalyzer()">← Analyze Another</button>
+                    <button class="action-button outline btn-outline" onclick="downloadReport()">📋 Download Report</button>
+                    <button class="action-button solid" onclick="scrollToChat()">Ask Questions →</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="chat-section" id="chatSection">
+            <h2 class="section-title">Ask Bridgr Anything</h2>
+            <p class="section-subtitle">Get instant answers about this project in plain English</p>
+
+            <div class="chat-container">
+                <div class="chat-header">
+                    <div class="status-dot"></div>
+                    <div class="chat-header-text">Bridgr Assistant</div>
+                    <div class="chat-status">Online</div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message">
+                        <div class="avatar">
+                            <img src="bridgr_logo_icon_only.png" alt="Bridgr">
+                        </div>
+                        <div class="message-bubble">
+                            <div class="message-text">Hi! I'm Bridgr. Ask me anything about this project and I'll explain it in simple business terms.</div>
+                        </div>
+                    </div>
+                    <div class="typing-indicator" id="typingIndicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <div class="chat-input-container">
+                        <input 
+                            type="text" 
+                            class="chat-input" 
+                            id="chatInput" 
+                            placeholder="Ask about costs, timeline, features..."
+                            autocomplete="off"
+                        >
+                        <button class="send-button" id="sendButton">→</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Bridgr © 2024 • Powered by IBM watsonx • Translating code into business value</p>
+    </footer>
+
+    <script>
+        // Global state
+        let currentReport = null;
+
+        // DOM elements
+        const inputPanel = document.getElementById('inputPanel');
+        const loadingPanel = document.getElementById('loadingPanel');
+        const reportPanel = document.getElementById('reportPanel');
+        const repoInput = document.getElementById('repoInput');
+        const analyzeButton = document.getElementById('analyzeButton');
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatMessages = document.getElementById('chatMessages');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        // Example chip handlers
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                repoInput.value = chip.dataset.url;
+            });
+        });
+
+        // Analyze button handler
+        analyzeButton.addEventListener('click', () => {
+            const repoUrl = repoInput.value.trim();
+            if (repoUrl) {
+                analyzeRepo(repoUrl);
+            }
+        });
+
+        // Enter key handler for repo input
+        repoInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const repoUrl = repoInput.value.trim();
+                if (repoUrl) {
+                    analyzeRepo(repoUrl);
+                }
+            }
+        });
+
+        // Chat handlers
+        sendButton.addEventListener('click', sendChatMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendChatMessage();
+            }
+        });
+
+        // Show loading state
+        function showLoadingState() {
+            inputPanel.classList.add('hidden');
+            reportPanel.classList.remove('active');
+            loadingPanel.classList.add('active');
+        }
+
+        // Show error
+        function showError(message) {
+            loadingPanel.classList.remove('active');
+            inputPanel.classList.remove('hidden');
+            
+            const errorCard = document.createElement('div');
+            errorCard.className = 'error-card';
+            errorCard.innerHTML = `
+                <div class="card-icon">
+                    <i data-lucide="alert-triangle"></i>
+                </div>
+                <h3 class="card-title">Error</h3>
+                <div class="card-content">${message}</div>
+            `;
+            
+            inputPanel.parentNode.insertBefore(errorCard, inputPanel);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                errorCard.remove();
+            }, 5000);
+        }
+
+        // Main analyze function
+        async function analyzeRepo(repoUrl) {
+            try {
+                showLoadingState();
+
+                // Extract repo path
+                const repoPath = repoUrl.replace('https://github.com/', '').replace(/\/$/, '');
+
+                // Fetch repo metadata from GitHub
+                const metaResponse = await fetch(`https://api.github.com/repos/${repoPath}`);
+                const meta = await metaResponse.json();
+
+                if (meta.message === 'Not Found') {
+                    showError('Repository not found. Make sure it\'s a public GitHub repository.');
+                    return;
+                }
+
+                // Fetch README
+                let readmeContent = 'No README available';
+                try {
+                    const readmeResponse = await fetch(`https://api.github.com/repos/${repoPath}/readme`);
+                    const readmeData = await readmeResponse.json();
+                    if (readmeData.content) {
+                        readmeContent = atob(readmeData.content.replace(/\n/g, ''));
+                    }
+                } catch (e) {
+                    console.log('No README found');
+                }
+
+                // Call our local proxy
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ repoUrl, readmeContent, repoMeta: meta })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentReport = data.report;
+                    renderReport(data.report, meta);
+                } else {
+                    showError(data.error || 'Failed to analyze repository');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError('An error occurred while analyzing the repository');
+            }
+        }
+
+        // Render report
+        function renderReport(report, meta) {
+            loadingPanel.classList.remove('active');
+            reportPanel.classList.add('active');
+
+            // Header
+            document.getElementById('report-title').textContent = report.projectName || meta.name;
+            
+            const tagPills = document.getElementById('tagPills');
+            tagPills.innerHTML = `
+                <span class="tag-pill"><i data-lucide="star"></i> ${meta.stargazers_count || 0} stars</span>
+                <span class="tag-pill"><i data-lucide="code"></i> ${meta.language || 'Multiple'}</span>
+            `;
+
+            // Competitive Edge
+            document.getElementById('competitive-edge-text').textContent =
+                report.competitiveEdge || 'Competitive advantage analysis';
+
+            const now = new Date();
+            document.getElementById('analyzedTime').textContent =
+                `Analyzed on ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
+
+            document.getElementById('confidenceBadge').textContent =
+                `${report.clarityScore || 94}% Clarity Score`;
+
+            // What It Does
+            document.getElementById('whatItDoes').textContent = report.whatItDoes;
+
+            // Business Value
+            const businessValue = document.getElementById('businessValue');
+            businessValue.innerHTML = '';
+            (report.businessValue || []).forEach(value => {
+                const li = document.createElement('li');
+                li.innerHTML = `<i data-lucide="check"></i><span>${value}</span>`;
+                businessValue.appendChild(li);
+            });
+
+            // Industries
+            const industries = document.getElementById('industries');
+            industries.innerHTML = '';
+            (report.industries || []).forEach(industry => {
+                const li = document.createElement('li');
+                li.innerHTML = `<i data-lucide="check"></i><span>${industry}</span>`;
+                industries.appendChild(li);
+            });
+
+            // Risks
+            const risks = document.getElementById('risks');
+            risks.innerHTML = '';
+            (report.risks || []).forEach(risk => {
+                const li = document.createElement('li');
+                li.innerHTML = `<i data-lucide="alert-circle" style="stroke: #f59e0b; width: 14px; height: 14px;"></i><span style="font-size: 14px; color: #8b9bb4;">${risk}</span>`;
+                risks.appendChild(li);
+            });
+
+            // Timeline
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+            (report.timeline || []).forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'timeline-item';
+                div.innerHTML = `
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-phase">${item.phase}</div>
+                        <div class="timeline-duration">${item.weeks}</div>
+                    </div>
+                `;
+                timeline.appendChild(div);
+            });
+
+            // Investment Chart
+            const investmentChart = document.getElementById('investmentChart');
+            investmentChart.innerHTML = '';
+            (report.investment || []).forEach(item => {
+                const colorClass = item.color === '#0f62fe' ? 'blue' : 
+                                  item.color === '#7c3aed' ? 'purple' : 
+                                  item.color === '#0891b2' ? 'cyan' : 'green';
+                
+                const barDiv = document.createElement('div');
+                barDiv.className = 'chart-bar';
+                barDiv.innerHTML = `
+                    <div class="chart-label">
+                        <span class="chart-label-text">${item.label}</span>
+                        <span class="chart-label-percent">${item.percent}%</span>
+                    </div>
+                    <div class="chart-bar-bg">
+                        <div class="chart-bar-fill ${colorClass}" style="width: ${item.percent}%"></div>
+                    </div>
+                `;
+                investmentChart.appendChild(barDiv);
+            });
+
+            // Radar Chart
+            if (report.radarScores) {
+                renderRadarChart(report.radarScores);
+            }
+
+            // Re-initialize Lucide icons after dynamic content
+            lucide.createIcons();
+        }
+
+        // Render Radar Chart
+        function renderRadarChart(radarScores) {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            
+            // Destroy previous chart if exists
+            if (window.radarChartInstance) {
+                window.radarChartInstance.destroy();
+            }
+            
+            window.radarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Complexity', 'Cost', 'Time to Market',
+                             'Risk', 'ROI Potential'],
+                    datasets: [{
+                        label: 'Project Score',
+                        data: [
+                            radarScores.complexity,
+                            radarScores.cost,
+                            radarScores.time,
+                            radarScores.risk,
+                            radarScores.roi
+                        ],
+                        backgroundColor: 'rgba(15, 98, 254, 0.15)',
+                        borderColor: '#0f62fe',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#0f62fe',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 10,
+                            ticks: {
+                                stepSize: 2,
+                                color: '#8b9bb4',
+                                font: { size: 11 },
+                                backdropColor: 'transparent'
+                            },
+                            grid: { color: 'rgba(139, 155, 180, 0.2)' },
+                            angleLines: { color: 'rgba(139, 155, 180, 0.2)' },
+                            pointLabels: {
+                                color: '#ffffff',
+                                font: { size: 12, weight: '600' }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // Reset analyzer
+        function resetAnalyzer() {
+            reportPanel.classList.remove('active');
+            inputPanel.classList.remove('hidden');
+            repoInput.value = '';
+            currentReport = null;
+        }
+
+        // Download Report as PDF
+        async function downloadReport() {
+            const btn = document.querySelector('.btn-outline');
+            btn.textContent = 'Generating PDF...';
+            btn.disabled = true;
+            
+            try {
+                const reportPanel = document.getElementById('reportPanel');
+                const canvas = await html2canvas(reportPanel, {
+                    backgroundColor: '#0f1729',
+                    scale: 1.5,
+                    useCORS: true,
+                    logging: false
+                });
+                
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+                
+                pdf.addImage(
+                    canvas.toDataURL('image/png'),
+                    'PNG', 0, 0,
+                    canvas.width, canvas.height
+                );
+                
+                const repoName = document.getElementById('report-title')
+                    ?.textContent || 'bridgr-report';
+                pdf.save(`${repoName}-bridgr-report.pdf`);
+                
+            } catch(e) {
+                console.error('PDF error:', e);
+                alert('Could not generate PDF. Try again.');
+            } finally {
+                btn.textContent = '📋 Download Report';
+                btn.disabled = false;
+            }
+        }
+
+        // Scroll to chat
+        function scrollToChat() {
+            document.getElementById('chatSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Send chat message
+        async function sendChatMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, true);
+            chatInput.value = '';
+
+            // Show typing indicator
+            typingIndicator.classList.add('active');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const repoContext = currentReport 
+                    ? `Project: ${currentReport.projectName}. ${currentReport.whatItDoes}`.substring(0, 300)
+                    : '';
+
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, repoContext }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeout);
+                const data = await response.json();
+
+                typingIndicator.classList.remove('active');
+
+                if (data.success && data.reply) {
+                    addMessage(data.reply, false);
+                } else {
+                    addMessage("I couldn't process that. Try again!", false);
+                }
+
+            } catch (error) {
+                console.error('Chat error:', error);
+                typingIndicator.classList.remove('active');
+                addMessage("I couldn't process that. Try again!", false);
+            }
+        }
+
+        // Add message to chat
+        function addMessage(text, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : ''}`;
+            
+            if (isUser) {
+                messageDiv.innerHTML = `
+                    <div class="message-bubble">
+                        <div class="message-text">${text}</div>
+                    </div>
+                    <div class="avatar">U</div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="avatar">
+                        <img src="bridgr_logo_icon_only.png" alt="Bridgr">
+                    </div>
+                    <div class="message-bubble">
+                        <div class="message-text">${text}</div>
+                    </div>
+                `;
+            }
+
+            chatMessages.insertBefore(messageDiv, typingIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    </script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

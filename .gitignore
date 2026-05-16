@@ -1,0 +1,9 @@
+.env
+node_modules/
+logo_base64.txt
+icon_only_base64.txt
+index - l1.html
+package-lock.json
+bridgr_logo_dark_stacked.png
+bridgr_logo_light_horizontal.png
+index - I1.html
